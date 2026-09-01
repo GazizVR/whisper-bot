@@ -26,6 +26,7 @@ func NewUpdateHandler(
 const (
 	StartText = "🔗 Отправьте медиа файл"
 	WaitText  = "⏳ Подождите, обрабатывается..."
+	ErrorText = "❌ Внутренняя ошибка, попробуйте снова"
 )
 
 func (h *UpdateHandler) Handle(
@@ -41,21 +42,44 @@ func (h *UpdateHandler) Handle(
 			)
 		}
 		if upd.Message.Video != nil {
-			msg, _ := h.Tg.SendMessage(
+			msg, err := h.Tg.SendMessage(
 				upd.Message.Chat.Id,
 				WaitText,
 				nil,
 				&upd.Message.Id,
 			)
+			if err != nil {
+				log.Println(err.Error())
+				h.Tg.SendMessage(
+					upd.Message.Chat.Id,
+					ErrorText,
+					nil,
+					&upd.Message.Id,
+				)
+				return
+			}
+
 			filePath, err := h.Tg.DownloadFile(upd.Message.Video.Id, "tmp")
 			if err != nil {
 				log.Println(err.Error())
+				h.Tg.SendMessage(
+					upd.Message.Chat.Id,
+					ErrorText,
+					nil,
+					&upd.Message.Id,
+				)
 				return
 			}
 
 			file, err := h.Trb.ToSrt(*filePath, "ru")
 			if err != nil {
 				log.Println(err.Error())
+				h.Tg.SendMessage(
+					upd.Message.Chat.Id,
+					ErrorText,
+					nil,
+					&upd.Message.Id,
+				)
 				return
 			}
 			os.Remove(*filePath)
