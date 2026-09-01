@@ -23,6 +23,68 @@ func NewUpdateHandler(
 	}
 }
 
+func (h *UpdateHandler) sendErrorMessage(
+	errText string,
+	chatId, msgId int64,
+) {
+	log.Println(errText)
+	h.Tg.SendMessage(
+		chatId,
+		ErrorText,
+		nil,
+		&msgId,
+	)
+}
+
+func (h *UpdateHandler) genAndSendSubtitles(
+	chatId, msgId int64,
+	fileId string,
+) {
+	msg, err := h.Tg.SendMessage(
+		chatId,
+		WaitText,
+		nil,
+		&msgId,
+	)
+	if err != nil {
+		h.sendErrorMessage(err.Error(), chatId, msgId)
+		return
+	}
+
+	filePath, err := h.Tg.DownloadFile(fileId, "tmp")
+	if err != nil {
+		h.sendErrorMessage(err.Error(), chatId, msgId)
+		return
+	}
+	defer os.Remove(*filePath)
+
+	file, err := h.Trb.ToSrt(*filePath, "en")
+	if err != nil {
+		h.sendErrorMessage(err.Error(), chatId, msgId)
+		return
+	}
+	defer func() {
+		file.Close()
+		os.Remove(file.Name())
+	}()
+
+	if _, err := h.Tg.DeleteMessage(
+		msg.Result.Chat.Id,
+		msg.Result.Id,
+	); err != nil {
+		h.sendErrorMessage(err.Error(), chatId, msgId)
+		return
+	}
+	if _, err := h.Tg.SendDocument(
+		chatId,
+		*file,
+		&msgId,
+	); err != nil {
+		h.sendErrorMessage(err.Error(), chatId, msgId)
+		return
+	}
+}
+
 const (
 	StartText = "🔗 Отправьте медиа файл"
 	WaitText  = "⏳ Подождите, обрабатывается..."
@@ -42,71 +104,11 @@ func (h *UpdateHandler) Handle(
 			)
 		}
 		if upd.Message.Video != nil {
-			msg, err := h.Tg.SendMessage(
+			h.genAndSendSubtitles(
 				upd.Message.Chat.Id,
-				WaitText,
-				nil,
-				&upd.Message.Id,
+				upd.Message.Id,
+				upd.Message.Video.Id,
 			)
-			if err != nil {
-				log.Println(err.Error())
-				h.Tg.SendMessage(
-					upd.Message.Chat.Id,
-					ErrorText,
-					nil,
-					&upd.Message.Id,
-				)
-				return
-			}
-
-			filePath, err := h.Tg.DownloadFile(upd.Message.Video.Id, "tmp")
-			if err != nil {
-				log.Println(err.Error())
-				h.Tg.SendMessage(
-					upd.Message.Chat.Id,
-					ErrorText,
-					nil,
-					&upd.Message.Id,
-				)
-				return
-			}
-
-			file, err := h.Trb.ToSrt(*filePath, "")
-			if err != nil {
-				log.Println(err.Error())
-				h.Tg.SendMessage(
-					upd.Message.Chat.Id,
-					ErrorText,
-					nil,
-					&upd.Message.Id,
-				)
-				return
-			}
-			os.Remove(*filePath)
-
-			_, err = h.Tg.DeleteMessage(
-				msg.Result.Chat.Id,
-				msg.Result.Id,
-			)
-			_, err = h.Tg.SendDocument(
-				upd.Message.Chat.Id,
-				*file,
-				&upd.Message.Id,
-			)
-
-			file.Close()
-			os.Remove(file.Name())
-
-			if err != nil {
-				log.Println(err.Error())
-				h.Tg.SendMessage(
-					upd.Message.Chat.Id,
-					ErrorText,
-					nil,
-					&upd.Message.Id,
-				)
-				return
-			}
 		}
 	}
 }
