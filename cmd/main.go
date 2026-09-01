@@ -26,6 +26,7 @@ func main() {
 		config.Token,
 		config.BaseURL,
 	)
+	log.Println("The server is starting!")
 	handler := handler.NewUpdateHandler(client, transcriber)
 	if err := client.ListenUpdates(
 		handler.Handle,

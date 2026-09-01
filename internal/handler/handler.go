@@ -22,19 +22,32 @@ func NewUpdateHandler(
 	}
 }
 
+const (
+	StartText = "🔗 Отправьте медиа файл"
+	WaitText  = "⏳ Подождите, обрабатывается..."
+)
+
 func (h *UpdateHandler) Handle(
 	upd telegram.Update,
 ) {
 	if upd.Message != nil {
+		if upd.Message.Text == "/start" {
+			h.Tg.SendMessage(
+				upd.Message.Chat.Id,
+				StartText,
+				nil,
+				nil,
+			)
+		}
 		if upd.Message.Video != nil {
-			filePath, err := h.Tg.DownloadFile(upd.Message.Video.Id, "tmp")
+			_, err := h.Tg.DownloadFile(upd.Message.Video.Id, "tmp")
 			if err != nil {
 				log.Println(err.Error())
 				return
 			}
 			h.Tg.SendMessage(
 				upd.Message.Chat.Id,
-				*filePath,
+				WaitText,
 				nil,
 				&upd.Message.Id,
 			)
