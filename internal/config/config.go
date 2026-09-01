@@ -3,10 +3,10 @@ package config
 import "os"
 
 type Config struct {
-	token          string
-	baseURL        string
-	ffmpegBinPath  string
-	whisperBinPath string
+	Token          string
+	BaseURL        string
+	FfmpegBinPath  string
+	WhisperBinPath string
 }
 
 func Load() *Config {
@@ -15,9 +15,9 @@ func Load() *Config {
 	ffmpegBinPath := os.Getenv("FFMPEG_BIN_PATH")
 	whisperBinPath := os.Getenv("WHISPER_BIN_PATH")
 	return &Config{
-		token:          token,
-		baseURL:        baseURL,
-		ffmpegBinPath:  ffmpegBinPath,
-		whisperBinPath: whisperBinPath,
+		Token:          token,
+		BaseURL:        baseURL,
+		FfmpegBinPath:  ffmpegBinPath,
+		WhisperBinPath: whisperBinPath,
 	}
 }
