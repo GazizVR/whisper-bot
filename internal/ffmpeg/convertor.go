@@ -20,7 +20,7 @@ func NewConvertor(
 	}
 }
 
-func (c *Convertor) ConvertToFlac(
+func (c *Convertor) ToFlac(
 	mediaPath string,
 ) (*string, error) {
 	binPath, err := exec.LookPath(c.binPath)
