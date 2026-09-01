@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/gazizvr/whisper-bot/internal/ffmpeg"
 )
@@ -41,11 +42,12 @@ func (t *Transcriber) ToSrt(
 		return nil, err
 	}
 	defer os.Remove(*cnvMediaPath)
-
+	outMediaName := string(*cnvMediaPath)[:strings.LastIndex(*cnvMediaPath, ".")]
 	cmdArgs := []string{
 		"-m", t.modelPath,
 		"-f", *cnvMediaPath,
 		"-osrt",
+		"-of", outMediaName,
 	}
 	if len(language) > 0 {
 		cmdArgs = append(cmdArgs, "-l", language)
@@ -59,7 +61,7 @@ func (t *Transcriber) ToSrt(
 		return nil, errors.New(errStr)
 	}
 
-	outFilePath := fmt.Sprint(*cnvMediaPath, ".srt")
+	outFilePath := fmt.Sprint(outMediaName, ".srt")
 	outFile, err := os.Open(outFilePath)
 	if err != nil {
 		return nil, err

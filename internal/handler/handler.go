@@ -58,6 +58,7 @@ func (h *UpdateHandler) Handle(
 				log.Println(err.Error())
 				return
 			}
+			os.Remove(*filePath)
 
 			h.Tg.EditMessageText(
 				msg.Result.Chat.Id,
