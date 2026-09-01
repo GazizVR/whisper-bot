@@ -110,5 +110,12 @@ func (h *UpdateHandler) Handle(
 				upd.Message.Video.Id,
 			)
 		}
+		if upd.Message.Audio != nil {
+			h.genAndSendSubtitles(
+				upd.Message.Chat.Id,
+				upd.Message.Id,
+				upd.Message.Audio.Id,
+			)
+		}
 	}
 }
