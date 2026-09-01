@@ -84,17 +84,29 @@ func (h *UpdateHandler) Handle(
 			}
 			os.Remove(*filePath)
 
-			h.Tg.DeleteMessage(
+			_, err = h.Tg.DeleteMessage(
 				msg.Result.Chat.Id,
 				msg.Result.Id,
 			)
-			h.Tg.SendDocument(
+			_, err = h.Tg.SendDocument(
 				upd.Message.Chat.Id,
 				*file,
 				&upd.Message.Id,
 			)
+
 			file.Close()
 			os.Remove(file.Name())
+
+			if err != nil {
+				log.Println(err.Error())
+				h.Tg.SendMessage(
+					upd.Message.Chat.Id,
+					ErrorText,
+					nil,
+					&upd.Message.Id,
+				)
+				return
+			}
 		}
 	}
 }
