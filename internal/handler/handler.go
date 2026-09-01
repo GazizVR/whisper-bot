@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strings"
+
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
 	"github.com/gazizvr/whisper-bot/internal/whisper"
 )
@@ -61,6 +63,16 @@ func (h *UpdateHandler) Handle(
 				upd.Message.Id,
 				upd.Message.VideoNote.Id,
 			)
+		}
+		if upd.Message.Document != nil {
+			if strings.Contains(upd.Message.Document.MimeType, "video") ||
+				strings.Contains(upd.Message.Document.MimeType, "audio") {
+				h.genAndSendSubtitles(
+					upd.Message.Chat.Id,
+					upd.Message.Id,
+					upd.Message.Document.Id,
+				)
+			}
 		}
 	}
 }
