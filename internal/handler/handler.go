@@ -36,7 +36,7 @@ func (h *UpdateHandler) Handle(
 				upd.Message.Chat.Id,
 				*filePath,
 				nil,
-				nil,
+				&upd.Message.Id,
 			)
 		}
 	}
