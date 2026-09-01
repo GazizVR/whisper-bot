@@ -11,7 +11,10 @@ import (
 )
 
 func main() {
-	config := config.Load()
+	config, err := config.Load()
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 	convertor := ffmpeg.NewConvertor(config.FfmpegBinPath)
 	transcriber := whisper.NewTranscriber(
 		config.WhisperBinPath,
