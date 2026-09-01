@@ -71,7 +71,7 @@ func (h *UpdateHandler) Handle(
 				return
 			}
 
-			file, err := h.Trb.ToSrt(*filePath, "ru")
+			file, err := h.Trb.ToSrt(*filePath, "")
 			if err != nil {
 				log.Println(err.Error())
 				h.Tg.SendMessage(
