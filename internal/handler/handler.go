@@ -84,11 +84,14 @@ func (h *UpdateHandler) Handle(
 			}
 			os.Remove(*filePath)
 
-			h.Tg.EditMessageText(
+			h.Tg.DeleteMessage(
 				msg.Result.Chat.Id,
 				msg.Result.Id,
-				file.Name(),
-				nil,
+			)
+			h.Tg.SendDocument(
+				upd.Message.Chat.Id,
+				*file,
+				&upd.Message.Id,
 			)
 			file.Close()
 			os.Remove(file.Name())
