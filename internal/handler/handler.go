@@ -2,6 +2,7 @@ package handler
 
 import (
 	"log"
+	"os"
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
 	"github.com/gazizvr/whisper-bot/internal/whisper"
@@ -40,17 +41,32 @@ func (h *UpdateHandler) Handle(
 			)
 		}
 		if upd.Message.Video != nil {
-			_, err := h.Tg.DownloadFile(upd.Message.Video.Id, "tmp")
-			if err != nil {
-				log.Println(err.Error())
-				return
-			}
-			h.Tg.SendMessage(
+			msg, _ := h.Tg.SendMessage(
 				upd.Message.Chat.Id,
 				WaitText,
 				nil,
 				&upd.Message.Id,
 			)
+			filePath, err := h.Tg.DownloadFile(upd.Message.Video.Id, "tmp")
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+
+			file, err := h.Trb.ToSrt(*filePath, "ru")
+			if err != nil {
+				log.Println(err.Error())
+				return
+			}
+
+			h.Tg.EditMessageText(
+				msg.Result.Chat.Id,
+				msg.Result.Id,
+				file.Name(),
+				nil,
+			)
+			file.Close()
+			os.Remove(file.Name())
 		}
 	}
 }

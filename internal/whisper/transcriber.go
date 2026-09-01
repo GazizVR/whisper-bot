@@ -29,7 +29,7 @@ func NewTranscriber(
 
 func (t *Transcriber) ToSrt(
 	mediaPath string,
-	language *string,
+	language string,
 ) (*os.File, error) {
 	binPath, err := exec.LookPath(t.binPath)
 	if err != nil {
@@ -47,8 +47,8 @@ func (t *Transcriber) ToSrt(
 		"-f", *cnvMediaPath,
 		"-osrt",
 	}
-	if language != nil {
-		cmdArgs = append(cmdArgs, "-l", *language)
+	if len(language) > 0 {
+		cmdArgs = append(cmdArgs, "-l", language)
 	}
 	cmd := exec.Command(binPath, cmdArgs...)
 
@@ -59,7 +59,7 @@ func (t *Transcriber) ToSrt(
 		return nil, errors.New(errStr)
 	}
 
-	outFilePath := fmt.Sprint(cnvMediaPath, ".srt")
+	outFilePath := fmt.Sprint(*cnvMediaPath, ".srt")
 	outFile, err := os.Open(outFilePath)
 	if err != nil {
 		return nil, err
