@@ -26,11 +26,11 @@ func Load() (*Config, error) {
 	}
 	ffmpegBinPath := os.Getenv("FFMPEG_BIN_PATH")
 	if len(strings.TrimSpace(ffmpegBinPath)) < 1 {
-		return nil, errors.ErrEmptyFfmpegBinPath
+		ffmpegBinPath = "ffmpeg"
 	}
 	whisperBinPath := os.Getenv("WHISPER_BIN_PATH")
 	if len(strings.TrimSpace(whisperBinPath)) < 1 {
-		return nil, errors.ErrEmptyWhisperBinPath
+		whisperBinPath = "whisper-cli"
 	}
 	whisperModelPath := os.Getenv("WHISPER_MODEL_PATH")
 	if len(strings.TrimSpace(whisperModelPath)) < 1 {
