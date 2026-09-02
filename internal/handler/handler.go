@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
-	"github.com/gazizvr/whisper-bot/internal/whisper"
+	"github.com/gazizvr/whisper-bot/pkg/whisper"
 )
 
 type UpdateHandler struct {

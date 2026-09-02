@@ -5,9 +5,9 @@ import (
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
 	"github.com/gazizvr/whisper-bot/internal/config"
-	"github.com/gazizvr/whisper-bot/internal/ffmpeg"
 	"github.com/gazizvr/whisper-bot/internal/handler"
-	"github.com/gazizvr/whisper-bot/internal/whisper"
+	"github.com/gazizvr/whisper-bot/pkg/ffmpeg"
+	"github.com/gazizvr/whisper-bot/pkg/whisper"
 )
 
 func main() {

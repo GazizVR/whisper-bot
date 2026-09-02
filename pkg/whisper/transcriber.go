@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/gazizvr/whisper-bot/internal/ffmpeg"
+	"github.com/gazizvr/whisper-bot/pkg/ffmpeg"
 )
 
 type Transcriber struct {
