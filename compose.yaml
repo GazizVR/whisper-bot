@@ -15,10 +15,10 @@ services:
     entrypoint: whisper-server
     ports:
       - "8082:8082"
-    environment:
-      - FNAME=/models/${WHISPER_MODEL_NAME}
-      - HOST=0.0.0.0
-      - PORT=8082
+    command: >
+      --host 0.0.0.0
+      --port 8082
+      -m /models/${WHISPER_MODEL_NAME}
     volumes:
       - whisper_models:/models
     deploy:
