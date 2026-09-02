@@ -14,11 +14,11 @@ services:
     image: ghcr.io/ggml-org/whisper.cpp:main-cuda
     entrypoint: whisper-server
     ports:
-      - "8082:8080"
+      - "8082:8082"
     environment:
       - FNAME=/models/${WHISPER_MODEL_NAME}
       - HOST=0.0.0.0
-      - PORT=8080
+      - PORT=8082
     volumes:
       - whisper_models:/models
     deploy:
@@ -37,7 +37,7 @@ services:
     environment:
       - TOKEN=${TOKEN}
       - TG_BASE_URL=http://telegram-bot-api:8081
-      - WHISPER_BASE_URL=http://telegram-bot-api
+      - WHISPER_BASE_URL=http://whisper:8082
 volumes:
   telegram-bot-api-data:
   whisper_models:

@@ -35,9 +35,10 @@ func (c *Convertor) ToWav(
 	cmdArgs := []string{
 		"-i", mediaPath,
 		"-vn",
-		"-ac 1",
-		"-ar 16000",
-		"-c:a pcm_s16le",
+		"-ac", "1",
+		"-ar", "16000",
+		"-c:a", "pcm_s16le",
+		"-y",
 		newMediaPath,
 	}
 	cmd := exec.Command(binPath, cmdArgs...)
