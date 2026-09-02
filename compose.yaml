@@ -7,7 +7,7 @@ services:
       TELEGRAM_LOCAL: true
       TELEGRAM_HTTP_PORT: 8081
     volumes:
-      - telegram-bot-api-data:/var/lib/telegram-bot-api
+      - telegram-bot-data:/var/lib/telegram-bot-api
     ports:
       - "8081:8081"
   whisper:
@@ -33,11 +33,11 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - telegram-bot-api-data:/var/lib/telegram-bot-api
+      - telegram-bot-data:/var/lib/telegram-bot-api
     environment:
       - TOKEN=${TOKEN}
       - TG_BASE_URL=http://telegram-bot-api:8081
       - WHISPER_BASE_URL=http://whisper:8082
 volumes:
-  telegram-bot-api-data:
+  telegram-bot-data:
   whisper_models:
