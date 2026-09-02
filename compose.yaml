@@ -10,6 +10,25 @@ services:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
     ports:
       - "8081:8081"
+  whisper:
+    image: ghcr.io/ggml-org/whisper.cpp:main-cuda
+    entrypoint: whisper-server
+    ports:
+      - "8082:8080"
+    environment:
+      - FNAME=/models/ggml-large-v3-turbo.bin
+      - HOST=0.0.0.0
+      - PORT=8080
+    volumes:
+      - models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   telegram-bot-api-data:
+  models:
