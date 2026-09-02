@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/gazizvr/whisper-bot/internal/errors"
@@ -21,14 +22,17 @@ func Load() (*Config, error) {
 	}
 	tgBaseURL := os.Getenv("TG_BASE_URL")
 	if len(strings.TrimSpace(tgBaseURL)) < 1 {
-		return nil, errors.ErrTgBaseURL
+		return nil, errors.ErrEmptyTgBaseURL
 	}
 	whisperBaseURL := os.Getenv("WHISPER_BASE_URL")
 	if len(strings.TrimSpace(whisperBaseURL)) < 1 {
-		return nil, errors.ErrWhisperBaseURL
+		return nil, errors.ErrEmptyWhisperBaseURL
 	}
 	ffmpegBinPath := os.Getenv("FFMPEG_BIN_PATH")
 	if len(strings.TrimSpace(ffmpegBinPath)) < 1 {
+		if _, err := exec.LookPath("ffmpeg"); err != nil {
+			return nil, errors.ErrFFMPEGNotFound
+		}
 		ffmpegBinPath = "ffmpeg"
 	}
 	return &Config{
