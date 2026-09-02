@@ -62,10 +62,6 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		os.Remove(file.Name())
 	}()
 
-	go h.Tg.DeleteMessage(
-		msg.Result.Chat.Id,
-		msg.Result.Id,
-	)
 	if _, err := h.Tg.SendDocument(
 		chatId,
 		*file,
@@ -73,5 +69,10 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	); err != nil {
 		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
+	} else {
+		h.Tg.DeleteMessage(
+			msg.Result.Chat.Id,
+			msg.Result.Id,
+		)
 	}
 }
