@@ -17,14 +17,13 @@ func main() {
 	}
 	convertor := ffmpeg.NewConvertor(config.FfmpegBinPath)
 	transcriber := whisper.NewTranscriber(
-		config.WhisperBinPath,
-		config.WhisperModelPath,
+		config.WhisperBaseURL,
 		convertor,
 	)
 
 	client := telegram.NewClient(
 		config.Token,
-		config.BaseURL,
+		config.TgBaseURL,
 	)
 	log.Println("The server is starting!")
 	handler := handler.NewUpdateHandler(client, transcriber)
