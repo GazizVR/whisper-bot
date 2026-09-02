@@ -45,7 +45,11 @@ func (c *Convertor) ToWav(
 	var stdErr bytes.Buffer
 	cmd.Stderr = &stdErr
 	if _, err = cmd.Output(); err != nil {
-		errStr := fmt.Sprintf("Err: %v\nStdErr: %v", err, stdErr)
+		errStr := fmt.Sprintf(
+			"Err: %s\nStdErr: %s",
+			err.Error(),
+			stdErr.String(),
+		)
 		return nil, errors.New(errStr)
 	}
 
