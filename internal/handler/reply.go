@@ -10,16 +10,16 @@ const (
 	ErrorText = "❌ Внутренняя ошибка, попробуйте снова"
 )
 
-func (h *UpdateHandler) sendErrorMessage(
+func (h *UpdateHandler) editToErrMsg(
 	errText string,
 	chatId, msgId int64,
 ) {
 	log.Println(errText)
-	h.Tg.SendMessage(
+	h.Tg.EditMessageText(
 		chatId,
+		msgId,
 		ErrorText,
 		nil,
-		&msgId,
 	)
 }
 
@@ -34,13 +34,19 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		&msgId,
 	)
 	if err != nil {
-		h.sendErrorMessage(err.Error(), chatId, msgId)
+		log.Println(err.Error())
+		h.Tg.SendMessage(
+			chatId,
+			ErrorText,
+			nil,
+			&msgId,
+		)
 		return
 	}
 
 	filePath, err := h.Tg.DownloadFile(fileId, "tmp")
 	if err != nil {
-		h.sendErrorMessage(err.Error(), chatId, msgId)
+		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
 	}
 	defer os.Remove(*filePath)
@@ -48,7 +54,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	language := "en"
 	file, err := h.Trb.ToSrt(*filePath, &language)
 	if err != nil {
-		h.sendErrorMessage(err.Error(), chatId, msgId)
+		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
 	}
 	defer func() {
@@ -65,7 +71,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		*file,
 		&msgId,
 	); err != nil {
-		h.sendErrorMessage(err.Error(), chatId, msgId)
+		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
 	}
 }
