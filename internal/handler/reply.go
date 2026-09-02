@@ -45,7 +45,8 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	}
 	defer os.Remove(*filePath)
 
-	file, err := h.Trb.ToSrt(*filePath, "en")
+	language := "en"
+	file, err := h.Trb.ToSrt(*filePath, &language)
 	if err != nil {
 		h.sendErrorMessage(err.Error(), chatId, msgId)
 		return
