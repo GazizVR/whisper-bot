@@ -2,11 +2,13 @@ package whisper
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/gazizvr/whisper-bot/pkg/ffmpeg"
 )
@@ -85,4 +87,16 @@ func (t *Transcriber) ToSrt(
 	}
 	defer resp.Body.Close()
 
+	srtFileName := fmt.Sprint(
+		string(*wavPath)[:strings.LastIndex(*wavPath, ".")],
+		".srt",
+	)
+	srtFile, err := os.Create(srtFileName)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := io.Copy(srtFile, resp.Body); err != nil {
+		return nil, err
+	}
+	return srtFile, nil
 }
