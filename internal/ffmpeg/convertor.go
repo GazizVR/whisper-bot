@@ -20,7 +20,7 @@ func NewConvertor(
 	}
 }
 
-func (c *Convertor) ToFlac(
+func (c *Convertor) ToWav(
 	mediaPath string,
 ) (*string, error) {
 	binPath, err := exec.LookPath(c.binPath)
@@ -30,11 +30,14 @@ func (c *Convertor) ToFlac(
 
 	newMediaPath := fmt.Sprint(
 		mediaPath[:strings.LastIndex(mediaPath, ".")],
-		".flac",
+		".wav",
 	)
 	cmdArgs := []string{
 		"-i", mediaPath,
 		"-vn",
+		"-ac 1",
+		"-ar 16000",
+		"-c:a pcm_s16le",
 		newMediaPath,
 	}
 	cmd := exec.Command(binPath, cmdArgs...)
