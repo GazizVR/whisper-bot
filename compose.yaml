@@ -16,11 +16,11 @@ services:
     ports:
       - "8082:8080"
     environment:
-      - FNAME=/models/ggml-large-v3-turbo.bin
+      - FNAME=/models/${WHISPER_MODEL_NAME}
       - HOST=0.0.0.0
       - PORT=8080
     volumes:
-      - models:/models
+      - whisper_models:/models
     deploy:
       resources:
         reservations:
@@ -28,7 +28,16 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-
+  bot:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - telegram-bot-api-data:/var/lib/telegram-bot-api
+    environment:
+      - TOKEN=${TOKEN}
+      - TG_BASE_URL=http://telegram-bot-api:8081
+      - WHISPER_BASE_URL=http://telegram-bot-api
 volumes:
   telegram-bot-api-data:
-  models:
+  whisper_models:
