@@ -20,6 +20,8 @@ services:
       --port 8082
       -m /models/${WHISPER_MODEL_NAME}
       -sow
+      --vad
+      -vm /models/${VAD_MODEL_NAME}
     volumes:
       - whisper_models:/models
     deploy:
