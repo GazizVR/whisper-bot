@@ -28,8 +28,9 @@ func (c *Convertor) ToWav(
 		return nil, err
 	}
 
-	newMediaPath := fmt.Sprint(
+	wavPath := fmt.Sprint(
 		mediaPath[:strings.LastIndex(mediaPath, ".")],
+		"-out",
 		".wav",
 	)
 	cmdArgs := []string{
@@ -39,7 +40,7 @@ func (c *Convertor) ToWav(
 		"-ar", "16000",
 		"-c:a", "pcm_s16le",
 		"-y",
-		newMediaPath,
+		wavPath,
 	}
 	cmd := exec.Command(binPath, cmdArgs...)
 
@@ -54,5 +55,5 @@ func (c *Convertor) ToWav(
 		return nil, errors.New(errStr)
 	}
 
-	return &newMediaPath, nil
+	return &wavPath, nil
 }
