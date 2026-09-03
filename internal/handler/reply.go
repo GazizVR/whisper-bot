@@ -44,22 +44,27 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		return
 	}
 
-	filePath, err := h.Tg.DownloadFile(fileId, "tmp")
+	mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
 	if err != nil {
 		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
 	}
-	defer os.Remove(*filePath)
+	defer os.Remove(*mediaPath)
 
 	language := "en"
-	file, err := h.Trb.ToSrt(*filePath, &language)
+	filePath, err := h.Trb.ToSrt(*mediaPath, &language)
+	if err != nil {
+		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
+		return
+	}
+	file, err := os.Open(*filePath)
 	if err != nil {
 		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
 	}
 	defer func() {
 		file.Close()
-		os.Remove(file.Name())
+		os.Remove(*filePath)
 	}()
 
 	if _, err := h.Tg.SendDocument(

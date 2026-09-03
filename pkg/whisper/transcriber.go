@@ -32,7 +32,7 @@ func NewTranscriber(
 func (t *Transcriber) ToSrt(
 	mediaPath string,
 	language *string,
-) (*os.File, error) {
+) (*string, error) {
 	wavPath, err := t.convertor.ToWav(mediaPath)
 	if err != nil {
 		return nil, err
@@ -87,24 +87,22 @@ func (t *Transcriber) ToSrt(
 		return nil, err
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		errStr := fmt.Sprintf("Error code: %d", resp.StatusCode)
 		return nil, errors.New(errStr)
 	}
 
-	srtFileName := fmt.Sprint(
+	fileName := fmt.Sprint(
 		string(*wavPath)[:strings.LastIndex(*wavPath, ".")],
 		".srt",
 	)
-	srtFile, err := os.Create(srtFileName)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := io.Copy(srtFile, resp.Body); err != nil {
-		srtFile.Close()
-		os.Remove(srtFileName)
+	if err := os.WriteFile(fileName, data, 0644); err != nil {
 		return nil, err
 	}
-	return srtFile, nil
+
+	return &fileName, nil
 }
