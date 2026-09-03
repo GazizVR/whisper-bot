@@ -2,6 +2,7 @@ package whisper
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -87,6 +88,11 @@ func (t *Transcriber) ToSrt(
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		errStr := fmt.Sprintf("Error code: %d", resp.StatusCode)
+		return nil, errors.New(errStr)
+	}
+
 	srtFileName := fmt.Sprint(
 		string(*wavPath)[:strings.LastIndex(*wavPath, ".")],
 		".srt",
@@ -96,6 +102,8 @@ func (t *Transcriber) ToSrt(
 		return nil, err
 	}
 	if _, err := io.Copy(srtFile, resp.Body); err != nil {
+		srtFile.Close()
+		os.Remove(srtFileName)
 		return nil, err
 	}
 	return srtFile, nil
