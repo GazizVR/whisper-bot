@@ -93,14 +93,15 @@ func (t *Transcriber) ToSrt(
 	}
 
 	fileName := fmt.Sprint(
-		string(*wavPath)[:strings.LastIndex(*wavPath, ".")],
+		string(mediaPath)[:strings.LastIndex(mediaPath, ".")],
 		".srt",
 	)
-	data, err := io.ReadAll(resp.Body)
+	file, err := os.Create(fileName)
 	if err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(fileName, data, 0644); err != nil {
+	defer file.Close()
+	if _, err := io.Copy(file, resp.Body); err != nil {
 		return nil, err
 	}
 
