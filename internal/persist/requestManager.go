@@ -2,25 +2,25 @@ package persist
 
 import "sync"
 
-type Chat struct {
+type Request struct {
 	MediaPath  *string
 	ReplyMsgId *int64
 	Language   *string
 }
 
-type ChatManager struct {
-	chats map[int64]Chat
+type RequestManager struct {
+	chats map[int64]Request
 	mux   sync.RWMutex
 }
 
-func NewChatManager() *ChatManager {
-	return &ChatManager{
-		chats: make(map[int64]Chat),
+func NewRequestManager() *RequestManager {
+	return &RequestManager{
+		chats: make(map[int64]Request),
 		mux:   sync.RWMutex{},
 	}
 }
 
-func (m *ChatManager) GetChat(chatId int64) *Chat {
+func (m *RequestManager) GetRequest(chatId int64) *Request {
 	m.mux.RLock()
 	defer m.mux.RUnlock()
 	chat, ok := m.chats[chatId]
@@ -30,16 +30,16 @@ func (m *ChatManager) GetChat(chatId int64) *Chat {
 	return &chat
 }
 
-func (m *ChatManager) PutChat(
+func (m *RequestManager) PutRequest(
 	chatId int64,
-	data Chat,
+	data Request,
 ) {
 	m.mux.Lock()
 	m.chats[chatId] = data
 	m.mux.Unlock()
 }
 
-func (m *ChatManager) RemoveChat(chatId int64) {
+func (m *RequestManager) RemoveRequest(chatId int64) {
 	m.mux.Lock()
 	delete(m.chats, chatId)
 	m.mux.Unlock()

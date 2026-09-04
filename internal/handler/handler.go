@@ -11,13 +11,13 @@ import (
 type UpdateHandler struct {
 	Tg  *telegram.Client
 	Trb *whisper.Transcriber
-	CM  *persist.ChatManager
+	CM  *persist.RequestManager
 }
 
 func NewUpdateHandler(
 	client *telegram.Client,
 	transcriber *whisper.Transcriber,
-	chatManager *persist.ChatManager,
+	chatManager *persist.RequestManager,
 ) *UpdateHandler {
 	return &UpdateHandler{
 		Tg:  client,

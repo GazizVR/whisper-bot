@@ -27,7 +27,7 @@ func main() {
 		config.TgBaseURL,
 	)
 	log.Println("The server is starting!")
-	chatManager := persist.NewChatManager()
+	chatManager := persist.NewRequestManager()
 	handler := handler.NewUpdateHandler(client, transcriber, chatManager)
 	if err := client.ListenUpdates(
 		handler.Handle,

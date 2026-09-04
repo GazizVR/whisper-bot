@@ -70,9 +70,9 @@ func (h *UpdateHandler) handleMedia(
 	chatId, msgId int64,
 	fileId string,
 ) {
-	chat := h.CM.GetChat(chatId)
+	chat := h.CM.GetRequest(chatId)
 	if chat == nil {
-		chat = &persist.Chat{}
+		chat = &persist.Request{}
 	}
 
 	mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
@@ -82,7 +82,7 @@ func (h *UpdateHandler) handleMedia(
 	}
 	chat.MediaPath = mediaPath
 	chat.ReplyMsgId = &msgId
-	h.CM.PutChat(chatId, *chat)
+	h.CM.PutRequest(chatId, *chat)
 
 	genLang := func(lang string) string {
 		return fmt.Sprintf("%s-%s", LangSelectAction, lang)
@@ -115,7 +115,7 @@ func (h *UpdateHandler) handleCallback(
 ) {
 	h.Tg.AnswerCallbackQuery(id)
 	if strings.Contains(data, LangSelectAction) {
-		chat := h.CM.GetChat(chatId)
+		chat := h.CM.GetRequest(chatId)
 		if chat == nil {
 			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
 			return
@@ -124,7 +124,7 @@ func (h *UpdateHandler) handleCallback(
 			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
 			return
 		}
-		defer h.CM.RemoveChat(chatId)
+		defer h.CM.RemoveRequest(chatId)
 		lang := data[strings.LastIndex(data, "-")+1:]
 		h.genAndSendSubtitles(
 			chatId,
