@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -10,36 +9,7 @@ import (
 	"github.com/gazizvr/whisper-bot/internal/persist"
 )
 
-const (
-	WaitText  = "⏳ Подождите, обрабатывается..."
-	ErrorText = "❌ Внутренняя ошибка, попробуйте снова"
-)
-
-func (h *UpdateHandler) editToErrMsg(
-	errText string,
-	chatId, msgId int64,
-) {
-	log.Println(errText)
-	h.Tg.EditMessageText(
-		chatId,
-		msgId,
-		ErrorText,
-		nil,
-	)
-}
-
-func (h *UpdateHandler) sendErrMsg(
-	errStr string,
-	chatId, msgId int64,
-) {
-	log.Println(errStr)
-	h.Tg.SendMessage(
-		chatId,
-		ErrorText,
-		nil,
-		&msgId,
-	)
-}
+const WaitText = "⏳ Подождите, обрабатывается..."
 
 func (h *UpdateHandler) genAndSendSubtitles(
 	chatId, msgId int64,
@@ -89,12 +59,10 @@ func (h *UpdateHandler) genAndSendSubtitles(
 
 const (
 	LangSelectText = "🗣 Выберите язык"
-	CancelText     = "❌ Отмена"
 )
 
 const (
 	LangSelectAction = "ls"
-	CancelAction     = "cl"
 )
 
 func (h *UpdateHandler) handleMedia(
@@ -125,9 +93,6 @@ func (h *UpdateHandler) handleMedia(
 				{Text: "🇷🇺 Русский", Data: genLang("ru")},
 				{Text: "🇺🇿 Uzbek", Data: genLang("uz")},
 			},
-			{
-				{Text: CancelText, Data: CancelAction},
-			},
 		}
 		markup := &telegram.InlineMarkup{
 			Keyboard: buttons,
@@ -150,10 +115,6 @@ func (h *UpdateHandler) handleCallback(
 	chatId, msgId int64,
 ) {
 	h.Tg.AnswerCallbackQuery(id)
-	if data == CancelAction {
-		h.Tg.DeleteMessage(chatId, msgId)
-		return
-	}
 	if strings.Contains(data, LangSelectAction) {
 		chat := h.CM.GetChat(chatId)
 		if chat == nil {
