@@ -3,8 +3,9 @@ package persist
 import "sync"
 
 type Chat struct {
-	MediaPath *string
-	Language  *string
+	MediaPath  *string
+	ReplyMsgId *int64
+	Language   *string
 }
 
 type ChatManager struct {

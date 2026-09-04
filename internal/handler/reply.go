@@ -13,6 +13,7 @@ const WaitText = "⏳ Подождите, обрабатывается..."
 
 func (h *UpdateHandler) genAndSendSubtitles(
 	chatId, msgId int64,
+	replyMsgId *int64,
 	mediaPath, language string,
 ) {
 	defer os.Remove(mediaPath)
@@ -45,7 +46,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	if _, err := h.Tg.SendDocument(
 		chatId,
 		*file,
-		&msg.Result.ReplyTo.Id,
+		replyMsgId,
 	); err != nil {
 		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
@@ -74,39 +75,37 @@ func (h *UpdateHandler) handleMedia(
 		chat = &persist.Chat{}
 	}
 
-	if chat.MediaPath == nil {
-		mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
-		if err != nil {
-			h.sendErrMsg(err.Error(), chatId, msgId)
-			return
-		}
-		chat.MediaPath = mediaPath
-		h.CM.PutChat(chatId, *chat)
+	mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
+	if err != nil {
+		h.sendErrMsg(err.Error(), chatId, msgId)
+		return
 	}
-	if chat.Language == nil {
-		genLang := func(lang string) string {
-			return fmt.Sprintf("%s-%s", LangSelectAction, lang)
-		}
-		buttons := [][]telegram.InlineButton{
-			{
-				{Text: "🇺🇸 English", Data: genLang("en")},
-				{Text: "🇷🇺 Русский", Data: genLang("ru")},
-				{Text: "🇺🇿 Uzbek", Data: genLang("uz")},
-			},
-		}
-		markup := &telegram.InlineMarkup{
-			Keyboard: buttons,
-		}
-		_, err := h.Tg.SendMessage(
-			chatId,
-			LangSelectText,
-			markup,
-			&msgId,
-		)
-		if err != nil {
-			h.sendErrMsg(err.Error(), chatId, msgId)
-			return
-		}
+	chat.MediaPath = mediaPath
+	chat.ReplyMsgId = &msgId
+	h.CM.PutChat(chatId, *chat)
+
+	genLang := func(lang string) string {
+		return fmt.Sprintf("%s-%s", LangSelectAction, lang)
+	}
+	buttons := [][]telegram.InlineButton{
+		{
+			{Text: "🇺🇸 English", Data: genLang("en")},
+			{Text: "🇷🇺 Русский", Data: genLang("ru")},
+			{Text: "🇺🇿 Uzbek", Data: genLang("uz")},
+		},
+	}
+	markup := &telegram.InlineMarkup{
+		Keyboard: buttons,
+	}
+	_, err = h.Tg.SendMessage(
+		chatId,
+		LangSelectText,
+		markup,
+		&msgId,
+	)
+	if err != nil {
+		h.sendErrMsg(err.Error(), chatId, msgId)
+		return
 	}
 }
 
@@ -130,6 +129,7 @@ func (h *UpdateHandler) handleCallback(
 		h.genAndSendSubtitles(
 			chatId,
 			msgId,
+			chat.ReplyMsgId,
 			*chat.MediaPath,
 			lang,
 		)
