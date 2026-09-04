@@ -4,21 +4,25 @@ import (
 	"strings"
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
+	"github.com/gazizvr/whisper-bot/internal/persist"
 	"github.com/gazizvr/whisper-bot/pkg/whisper"
 )
 
 type UpdateHandler struct {
 	Tg  *telegram.Client
 	Trb *whisper.Transcriber
+	CM  *persist.ChatManager
 }
 
 func NewUpdateHandler(
 	client *telegram.Client,
 	transcriber *whisper.Transcriber,
+	chatManager *persist.ChatManager,
 ) *UpdateHandler {
 	return &UpdateHandler{
 		Tg:  client,
 		Trb: transcriber,
+		CM:  chatManager,
 	}
 }
 
@@ -37,28 +41,28 @@ func (h *UpdateHandler) Handle(
 			)
 		}
 		if upd.Message.Video != nil {
-			h.genAndSendSubtitles(
+			h.handleMedia(
 				upd.Message.Chat.Id,
 				upd.Message.Id,
-				upd.Message.Video.Id,
+				upd.Message.Audio.Id,
 			)
 		}
 		if upd.Message.Audio != nil {
-			h.genAndSendSubtitles(
+			h.handleMedia(
 				upd.Message.Chat.Id,
 				upd.Message.Id,
 				upd.Message.Audio.Id,
 			)
 		}
 		if upd.Message.Voice != nil {
-			h.genAndSendSubtitles(
+			h.handleMedia(
 				upd.Message.Chat.Id,
 				upd.Message.Id,
 				upd.Message.Voice.Id,
 			)
 		}
 		if upd.Message.VideoNote != nil {
-			h.genAndSendSubtitles(
+			h.handleMedia(
 				upd.Message.Chat.Id,
 				upd.Message.Id,
 				upd.Message.VideoNote.Id,
@@ -67,7 +71,7 @@ func (h *UpdateHandler) Handle(
 		if upd.Message.Document != nil {
 			if strings.Contains(upd.Message.Document.MimeType, "video") ||
 				strings.Contains(upd.Message.Document.MimeType, "audio") {
-				h.genAndSendSubtitles(
+				h.handleMedia(
 					upd.Message.Chat.Id,
 					upd.Message.Id,
 					upd.Message.Document.Id,

@@ -6,6 +6,7 @@ import (
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
 	"github.com/gazizvr/whisper-bot/internal/config"
 	"github.com/gazizvr/whisper-bot/internal/handler"
+	"github.com/gazizvr/whisper-bot/internal/persist"
 	"github.com/gazizvr/whisper-bot/pkg/ffmpeg"
 	"github.com/gazizvr/whisper-bot/pkg/whisper"
 )
@@ -26,7 +27,8 @@ func main() {
 		config.TgBaseURL,
 	)
 	log.Println("The server is starting!")
-	handler := handler.NewUpdateHandler(client, transcriber)
+	chatManager := persist.NewChatManager()
+	handler := handler.NewUpdateHandler(client, transcriber, chatManager)
 	if err := client.ListenUpdates(
 		handler.Handle,
 		[]string{"meessage"},
