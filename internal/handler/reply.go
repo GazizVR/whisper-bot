@@ -45,6 +45,9 @@ func (h *UpdateHandler) handleMedia(
 			{Text: "🇷🇺 Русский", Data: genLang("ru")},
 			{Text: "🇺🇿 Uzbek", Data: genLang("uz")},
 		},
+		{
+			{Text: "🌐 Автоматически", Data: genLang("auto")},
+		},
 	}
 	markup := &telegram.InlineMarkup{
 		Keyboard: buttons,
@@ -76,9 +79,11 @@ func (h *UpdateHandler) handleCallback(
 			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
 			return
 		}
-		lang := data[strings.LastIndex(data, "-")+1:]
-		request.Language = &lang
-		h.RM.PutRequest(chatId, *request)
+		language := data[strings.LastIndex(data, "-")+1:]
+		if language != "auto" {
+			request.Language = &language
+			h.RM.PutRequest(chatId, *request)
+		}
 
 		getOutFormat := func(lang string) string {
 			return fmt.Sprintf("%s-%s", OutFormatSelectAction, lang)
@@ -113,10 +118,6 @@ func (h *UpdateHandler) handleCallback(
 			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
 			return
 		}
-		if request.Language == nil {
-			h.editToErrMsg("Chat.Language is empty handle callback", chatId, msgId)
-			return
-		}
 		defer h.RM.RemoveRequest(chatId)
 		outFormat := data[strings.LastIndex(data, "-")+1:]
 		h.genAndSendSubtitles(
@@ -124,7 +125,7 @@ func (h *UpdateHandler) handleCallback(
 			msgId,
 			request.ReplyMsgId,
 			*request.MediaPath,
-			*request.Language,
+			request.Language,
 			outFormat,
 		)
 	}
