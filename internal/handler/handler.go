@@ -78,14 +78,14 @@ func (h *UpdateHandler) Handle(
 				)
 			}
 		}
-		if upd.Callback != nil {
-			query := upd.Callback
-			h.handleCallback(
-				query.Id,
-				query.Data,
-				query.Message.Chat.Id,
-				query.Message.Id,
-			)
-		}
+	}
+	if upd.Callback != nil {
+		query := upd.Callback
+		h.handleCallback(
+			query.Id,
+			query.Data,
+			query.Message.Chat.Id,
+			query.Message.Id,
+		)
 	}
 }
