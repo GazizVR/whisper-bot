@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
 	"github.com/gazizvr/whisper-bot/internal/persist"
@@ -40,7 +42,7 @@ func (h *UpdateHandler) sendErrMsg(
 }
 
 func (h *UpdateHandler) genAndSendSubtitles(
-	chatId, msgId, replyMsgId int64,
+	chatId, msgId int64,
 	mediaPath, language string,
 ) {
 	defer os.Remove(mediaPath)
@@ -73,7 +75,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	if _, err := h.Tg.SendDocument(
 		chatId,
 		*file,
-		&replyMsgId,
+		&msg.Result.ReplyTo.Id,
 	); err != nil {
 		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
@@ -85,10 +87,14 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	}
 }
 
-const LangSelectText = "🗣 Выберите язык"
+const (
+	LangSelectText = "🗣 Выберите язык"
+	CancelText     = "❌ Отмена"
+)
 
 const (
-	LangSelect = "ls"
+	LangSelectAction = "ls"
+	CancelAction     = "cl"
 )
 
 func (h *UpdateHandler) handleMedia(
@@ -107,12 +113,20 @@ func (h *UpdateHandler) handleMedia(
 			return
 		}
 		chat.MediaPath = mediaPath
+		h.CM.PutChat(chatId, *chat)
 	}
 	if chat.Language == nil {
+		genLang := func(lang string) string {
+			return fmt.Sprintf("%s-%s", LangSelectAction, lang)
+		}
 		buttons := [][]telegram.InlineButton{
 			{
-				{Text: "🇺🇸 English", Data: "en"},
-				{Text: "🇷🇺 Русский", Data: "ru"},
+				{Text: "🇺🇸 English", Data: genLang("en")},
+				{Text: "🇷🇺 Русский", Data: genLang("ru")},
+				{Text: "🇺🇿 Uzbek", Data: genLang("uz")},
+			},
+			{
+				{Text: CancelText, Data: CancelAction},
 			},
 		}
 		markup := &telegram.InlineMarkup{
@@ -129,9 +143,34 @@ func (h *UpdateHandler) handleMedia(
 			return
 		}
 	}
-	// h.genAndSendSubtitles(
-	// 	chatId,
-	// 	msgId,
-	// 	fileId,
-	// )
+}
+
+func (h *UpdateHandler) handleCallback(
+	id, data string,
+	chatId, msgId int64,
+) {
+	h.Tg.AnswerCallbackQuery(id)
+	if data == CancelAction {
+		h.Tg.DeleteMessage(chatId, msgId)
+		return
+	}
+	if strings.Contains(data, LangSelectAction) {
+		chat := h.CM.GetChat(chatId)
+		if chat == nil {
+			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
+			return
+		}
+		if chat.MediaPath == nil {
+			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
+			return
+		}
+		defer h.CM.RemoveChat(chatId)
+		lang := data[strings.LastIndex(data, "-")+1:]
+		h.genAndSendSubtitles(
+			chatId,
+			msgId,
+			*chat.MediaPath,
+			lang,
+		)
+	}
 }

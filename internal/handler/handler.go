@@ -44,7 +44,7 @@ func (h *UpdateHandler) Handle(
 			h.handleMedia(
 				upd.Message.Chat.Id,
 				upd.Message.Id,
-				upd.Message.Audio.Id,
+				upd.Message.Video.Id,
 			)
 		}
 		if upd.Message.Audio != nil {
@@ -77,6 +77,15 @@ func (h *UpdateHandler) Handle(
 					upd.Message.Document.Id,
 				)
 			}
+		}
+		if upd.Callback != nil {
+			query := upd.Callback
+			h.handleCallback(
+				query.Id,
+				query.Data,
+				query.Message.Chat.Id,
+				query.Message.Id,
+			)
 		}
 	}
 }
