@@ -11,7 +11,7 @@ import (
 type UpdateHandler struct {
 	Tg  *telegram.Client
 	Trb *whisper.Transcriber
-	CM  *persist.RequestManager
+	RM  *persist.RequestManager
 }
 
 func NewUpdateHandler(
@@ -22,7 +22,7 @@ func NewUpdateHandler(
 	return &UpdateHandler{
 		Tg:  client,
 		Trb: transcriber,
-		CM:  chatManager,
+		RM:  chatManager,
 	}
 }
 

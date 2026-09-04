@@ -14,7 +14,7 @@ const WaitText = "⏳ Подождите, обрабатывается..."
 func (h *UpdateHandler) genAndSendSubtitles(
 	chatId, msgId int64,
 	replyMsgId *int64,
-	mediaPath, language string,
+	mediaPath, language, outFormat string,
 ) {
 	defer os.Remove(mediaPath)
 	msg, err := h.Tg.EditMessageText(
@@ -28,7 +28,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		return
 	}
 
-	filePath, err := h.Trb.ToSrt(mediaPath, &language)
+	filePath, err := h.Trb.ToSrt(mediaPath, &language, outFormat)
 	if err != nil {
 		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 		return
@@ -59,18 +59,20 @@ func (h *UpdateHandler) genAndSendSubtitles(
 }
 
 const (
-	LangSelectText = "🗣 Выберите язык"
+	LangSelectText      = "🗣 Выберите язык"
+	OutFormatSelectText = "📤 Выберите формат вывода"
 )
 
 const (
-	LangSelectAction = "ls"
+	LangSelectAction      = "ls"
+	OutFormatSelectAction = "ofs"
 )
 
 func (h *UpdateHandler) handleMedia(
 	chatId, msgId int64,
 	fileId string,
 ) {
-	chat := h.CM.GetRequest(chatId)
+	chat := h.RM.GetRequest(chatId)
 	if chat == nil {
 		chat = &persist.Request{}
 	}
@@ -82,7 +84,7 @@ func (h *UpdateHandler) handleMedia(
 	}
 	chat.MediaPath = mediaPath
 	chat.ReplyMsgId = &msgId
-	h.CM.PutRequest(chatId, *chat)
+	h.RM.PutRequest(chatId, *chat)
 
 	genLang := func(lang string) string {
 		return fmt.Sprintf("%s-%s", LangSelectAction, lang)
@@ -115,23 +117,64 @@ func (h *UpdateHandler) handleCallback(
 ) {
 	h.Tg.AnswerCallbackQuery(id)
 	if strings.Contains(data, LangSelectAction) {
-		chat := h.CM.GetRequest(chatId)
-		if chat == nil {
+		request := h.RM.GetRequest(chatId)
+		if request == nil {
 			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
 			return
 		}
-		if chat.MediaPath == nil {
+		if request.MediaPath == nil {
 			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
 			return
 		}
-		defer h.CM.RemoveRequest(chatId)
 		lang := data[strings.LastIndex(data, "-")+1:]
+		request.Language = &lang
+		h.RM.PutRequest(chatId, *request)
+
+		getOutFormat := func(lang string) string {
+			return fmt.Sprintf("%s-%s", OutFormatSelectAction, lang)
+		}
+		buttons := [][]telegram.InlineButton{
+			{
+				{Text: "📄 .srt файл", Data: getOutFormat("srt")},
+			},
+		}
+		markup := &telegram.InlineMarkup{
+			Keyboard: buttons,
+		}
+		_, err := h.Tg.SendMessage(
+			chatId,
+			OutFormatSelectText,
+			markup,
+			&msgId,
+		)
+		if err != nil {
+			h.sendErrMsg(err.Error(), chatId, msgId)
+			return
+		}
+	}
+	if strings.Contains(data, OutFormatSelectAction) {
+		request := h.RM.GetRequest(chatId)
+		if request == nil {
+			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
+			return
+		}
+		if request.MediaPath == nil {
+			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
+			return
+		}
+		if request.Language == nil {
+			h.editToErrMsg("Chat.Language is empty handle callback", chatId, msgId)
+			return
+		}
+		defer h.RM.RemoveRequest(chatId)
+		outFormat := data[strings.LastIndex(data, "-")+1:]
 		h.genAndSendSubtitles(
 			chatId,
 			msgId,
-			chat.ReplyMsgId,
-			*chat.MediaPath,
-			lang,
+			request.ReplyMsgId,
+			*request.MediaPath,
+			*request.Language,
+			outFormat,
 		)
 	}
 }

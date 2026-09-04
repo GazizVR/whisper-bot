@@ -32,6 +32,7 @@ func NewTranscriber(
 func (t *Transcriber) ToSrt(
 	mediaPath string,
 	language *string,
+	outFormat string,
 ) (*string, error) {
 	wavPath, err := t.convertor.ToWav(mediaPath)
 	if err != nil {
@@ -48,7 +49,7 @@ func (t *Transcriber) ToSrt(
 
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
-	if err := writer.WriteField("response_format", "srt"); err != nil {
+	if err := writer.WriteField("response_format", outFormat); err != nil {
 		return nil, err
 	}
 	if language != nil {
