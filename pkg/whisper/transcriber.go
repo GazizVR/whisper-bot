@@ -2,6 +2,7 @@ package whisper
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,11 +30,11 @@ func NewTranscriber(
 	}
 }
 
-func (t *Transcriber) ToSrt(
+func (t *Transcriber) transcribe(
 	mediaPath string,
 	language *string,
 	outFormat string,
-) (*string, error) {
+) ([]byte, error) {
 	wavPath, err := t.convertor.ToWav(mediaPath)
 	if err != nil {
 		return nil, err
@@ -93,18 +94,49 @@ func (t *Transcriber) ToSrt(
 		return nil, errors.New(errStr)
 	}
 
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func (t *Transcriber) ToSrt(
+	mediaPath string,
+	language *string,
+) (*os.File, error) {
+	respData, err := t.transcribe(mediaPath, language, "srt")
+	if err != nil {
+		return nil, err
+	}
+
 	fileName := fmt.Sprint(
 		string(mediaPath)[:strings.LastIndex(mediaPath, ".")],
 		".srt",
 	)
-	file, err := os.Create(fileName)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	if _, err := io.Copy(file, resp.Body); err != nil {
+	if err := os.WriteFile(fileName, respData, 0644); err != nil {
 		return nil, err
 	}
 
-	return &fileName, nil
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func (t *Transcriber) ToJson(
+	mediaPath string,
+	language *string,
+) (*InferenceResp, error) {
+	respData, err := t.transcribe(mediaPath, language, "json")
+	if err != nil {
+		return nil, err
+	}
+	var resp InferenceResp
+	if err := json.Unmarshal(respData, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }

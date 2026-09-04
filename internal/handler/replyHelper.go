@@ -21,32 +21,42 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		return
 	}
 
-	filePath, err := h.Trb.ToSrt(mediaPath, &language, outFormat)
-	if err != nil {
-		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
-		return
-	}
-	file, err := os.Open(*filePath)
-	if err != nil {
-		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
-		return
-	}
-	defer func() {
-		file.Close()
-		os.Remove(*filePath)
-	}()
+	switch outFormat {
+	case "srt":
+		file, err := h.Trb.ToSrt(mediaPath, &language)
+		if err != nil {
+			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
+			return
+		}
+		defer func() {
+			file.Close()
+			os.Remove(file.Name())
+		}()
 
-	if _, err := h.Tg.SendDocument(
-		chatId,
-		*file,
-		replyMsgId,
-	); err != nil {
-		h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
-		return
-	} else {
-		h.Tg.DeleteMessage(
-			msg.Result.Chat.Id,
-			msg.Result.Id,
+		if _, err := h.Tg.SendDocument(
+			chatId,
+			*file,
+			replyMsgId,
+		); err != nil {
+			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
+			return
+		} else {
+			h.Tg.DeleteMessage(
+				msg.Result.Chat.Id,
+				msg.Result.Id,
+			)
+		}
+	case "json":
+		resp, err := h.Trb.ToJson(mediaPath, &language)
+		if err != nil {
+			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
+			return
+		}
+		h.Tg.EditMessageText(
+			chatId,
+			msgId,
+			resp.Text,
+			nil,
 		)
 	}
 }
