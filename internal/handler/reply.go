@@ -27,12 +27,7 @@ func (h *UpdateHandler) handleMedia(
 		chat = &persist.Request{}
 	}
 
-	mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
-	if err != nil {
-		h.sendErrMsg(err.Error(), chatId, msgId)
-		return
-	}
-	chat.MediaPath = mediaPath
+	chat.FileId = &fileId
 	chat.ReplyMsgId = &msgId
 	h.RM.PutRequest(chatId, *chat)
 
@@ -52,7 +47,7 @@ func (h *UpdateHandler) handleMedia(
 	markup := &telegram.InlineMarkup{
 		Keyboard: buttons,
 	}
-	_, err = h.Tg.SendMessage(
+	_, err := h.Tg.SendMessage(
 		chatId,
 		LangSelectText,
 		markup,
@@ -75,8 +70,8 @@ func (h *UpdateHandler) handleCallback(
 			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
 			return
 		}
-		if request.MediaPath == nil {
-			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
+		if request.FileId == nil {
+			h.editToErrMsg("Chat.FileId is empty handle callback", chatId, msgId)
 			return
 		}
 		language := data[strings.LastIndex(data, "-")+1:]
@@ -114,8 +109,8 @@ func (h *UpdateHandler) handleCallback(
 			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
 			return
 		}
-		if request.MediaPath == nil {
-			h.editToErrMsg("Chat.MediaPath is empty handle callback", chatId, msgId)
+		if request.FileId == nil {
+			h.editToErrMsg("Chat.FileId is empty handle callback", chatId, msgId)
 			return
 		}
 		defer h.RM.RemoveRequest(chatId)
@@ -124,7 +119,7 @@ func (h *UpdateHandler) handleCallback(
 			chatId,
 			msgId,
 			request.ReplyMsgId,
-			*request.MediaPath,
+			*request.FileId,
 			request.Language,
 			outFormat,
 		)

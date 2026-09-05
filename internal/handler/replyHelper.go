@@ -7,11 +7,10 @@ const WaitText = "⏳ Подождите, обрабатывается..."
 func (h *UpdateHandler) genAndSendSubtitles(
 	chatId, msgId int64,
 	replyMsgId *int64,
-	mediaPath string,
+	fileId string,
 	language *string,
 	outFormat string,
 ) {
-	defer os.Remove(mediaPath)
 	msg, err := h.Tg.EditMessageText(
 		chatId,
 		msgId,
@@ -23,9 +22,16 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		return
 	}
 
+	mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
+	if err != nil {
+		h.sendErrMsg(err.Error(), chatId, msgId)
+		return
+	}
+	defer os.Remove(*mediaPath)
+
 	switch outFormat {
 	case "srt":
-		file, err := h.Trb.ToSrt(mediaPath, language)
+		file, err := h.Trb.ToSrt(*mediaPath, language)
 		if err != nil {
 			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 			return
@@ -49,7 +55,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 			)
 		}
 	case "json":
-		resp, err := h.Trb.ToJson(mediaPath, language)
+		resp, err := h.Trb.ToJson(*mediaPath, language)
 		if err != nil {
 			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 			return

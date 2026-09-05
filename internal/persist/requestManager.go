@@ -3,7 +3,7 @@ package persist
 import "sync"
 
 type Request struct {
-	MediaPath  *string
+	FileId     *string
 	ReplyMsgId *int64
 	Language   *string
 }
