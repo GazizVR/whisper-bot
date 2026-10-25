@@ -11,7 +11,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 	language *string,
 	outFormat string,
 ) {
-	msg, err := h.Tg.EditMessageText(
+	msg, err := h.bot.EditMessageText(
 		chatId,
 		msgId,
 		WaitText,
@@ -22,7 +22,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		return
 	}
 
-	mediaPath, err := h.Tg.DownloadFile(fileId, "tmp")
+	mediaPath, err := h.bot.DownloadFile(fileId, "tmp")
 	if err != nil {
 		h.sendErrMsg(err.Error(), chatId, msgId)
 		return
@@ -31,7 +31,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 
 	switch outFormat {
 	case "srt":
-		file, err := h.Trb.ToSrt(*mediaPath, language)
+		file, err := h.transcriber.ToSrt(*mediaPath, language)
 		if err != nil {
 			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 			return
@@ -41,7 +41,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 			os.Remove(file.Name())
 		}()
 
-		if _, err := h.Tg.SendDocument(
+		if _, err := h.bot.SendDocument(
 			chatId,
 			*file,
 			replyMsgId,
@@ -49,18 +49,18 @@ func (h *UpdateHandler) genAndSendSubtitles(
 			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 			return
 		} else {
-			h.Tg.DeleteMessage(
+			h.bot.DeleteMessage(
 				msg.Result.Chat.Id,
 				msg.Result.Id,
 			)
 		}
 	case "json":
-		resp, err := h.Trb.ToJson(*mediaPath, language)
+		resp, err := h.transcriber.ToJson(*mediaPath, language)
 		if err != nil {
 			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
 			return
 		}
-		h.Tg.EditMessageText(
+		h.bot.EditMessageText(
 			chatId,
 			msgId,
 			resp.Text,

@@ -42,8 +42,8 @@ services:
       - telegram-bot-data:/var/lib/telegram-bot-api
     environment:
       - TOKEN=${TOKEN}
-      - TG_BASE_URL=http://telegram-bot-api:8081
-      - WHISPER_BASE_URL=http://whisper:8082
+      - BOT_API_BASE_URL=http://telegram-bot-api:8081
+      - WHISPER_API_BASE_URL=http://whisper:8082
 volumes:
   telegram-bot-data:
   whisper_models:

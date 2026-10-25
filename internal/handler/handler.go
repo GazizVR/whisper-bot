@@ -4,25 +4,25 @@ import (
 	"strings"
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
-	"github.com/gazizvr/whisper-bot/internal/persist"
+	"github.com/gazizvr/whisper-bot/internal/store"
 	"github.com/gazizvr/whisper-bot/pkg/whisper"
 )
 
 type UpdateHandler struct {
-	Tg  *telegram.Client
-	Trb *whisper.Transcriber
-	RM  *persist.RequestManager
+	bot         *telegram.Client
+	transcriber *whisper.Transcriber
+	store       *store.RequestStore
 }
 
 func NewUpdateHandler(
-	client *telegram.Client,
+	bot *telegram.Client,
 	transcriber *whisper.Transcriber,
-	chatManager *persist.RequestManager,
+	store *store.RequestStore,
 ) *UpdateHandler {
 	return &UpdateHandler{
-		Tg:  client,
-		Trb: transcriber,
-		RM:  chatManager,
+		bot:         bot,
+		transcriber: transcriber,
+		store:       store,
 	}
 }
 
@@ -33,7 +33,7 @@ func (h *UpdateHandler) Handle(
 ) {
 	if upd.Message != nil {
 		if upd.Message.Text == "/start" {
-			h.Tg.SendMessage(
+			h.bot.SendMessage(
 				upd.Message.Chat.Id,
 				StartText,
 				nil,

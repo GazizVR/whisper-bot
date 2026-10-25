@@ -9,7 +9,7 @@ func (h *UpdateHandler) editToErrMsg(
 	chatId, msgId int64,
 ) {
 	log.Println(errText)
-	h.Tg.EditMessageText(
+	h.bot.EditMessageText(
 		chatId,
 		msgId,
 		ErrorText,
@@ -22,7 +22,7 @@ func (h *UpdateHandler) sendErrMsg(
 	chatId, msgId int64,
 ) {
 	log.Println(errStr)
-	h.Tg.SendMessage(
+	h.bot.SendMessage(
 		chatId,
 		ErrorText,
 		nil,

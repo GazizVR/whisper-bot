@@ -1,6 +1,8 @@
-package persist
+package store
 
-import "sync"
+import (
+	"sync"
+)
 
 type Request struct {
 	FileId     *string
@@ -8,19 +10,19 @@ type Request struct {
 	Language   *string
 }
 
-type RequestManager struct {
+type RequestStore struct {
 	chats map[int64]Request
 	mux   sync.RWMutex
 }
 
-func NewRequestManager() *RequestManager {
-	return &RequestManager{
+func NewRequestStore() *RequestStore {
+	return &RequestStore{
 		chats: make(map[int64]Request),
 		mux:   sync.RWMutex{},
 	}
 }
 
-func (m *RequestManager) GetRequest(chatId int64) *Request {
+func (m *RequestStore) Get(chatId int64) *Request {
 	m.mux.RLock()
 	defer m.mux.RUnlock()
 	chat, ok := m.chats[chatId]
@@ -30,7 +32,7 @@ func (m *RequestManager) GetRequest(chatId int64) *Request {
 	return &chat
 }
 
-func (m *RequestManager) PutRequest(
+func (m *RequestStore) Set(
 	chatId int64,
 	data Request,
 ) {
@@ -39,7 +41,7 @@ func (m *RequestManager) PutRequest(
 	m.mux.Unlock()
 }
 
-func (m *RequestManager) RemoveRequest(chatId int64) {
+func (m *RequestStore) Delete(chatId int64) {
 	m.mux.Lock()
 	delete(m.chats, chatId)
 	m.mux.Unlock()

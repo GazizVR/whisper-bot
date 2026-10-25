@@ -9,24 +9,26 @@ import (
 )
 
 type Config struct {
-	Token          string
-	TgBaseURL      string
-	WhisperBaseURL string
-	FfmpegBinPath  string
+	Token             string
+	BotAPIBaseURL     string
+	WhisperAPIBaseURL string
+	FfmpegBinPath     string
 }
+
+const defaultBotAPIBaseURL string = "https://api.telegram.org"
 
 func Load() (*Config, error) {
 	token := os.Getenv("TOKEN")
 	if len(strings.TrimSpace(token)) < 1 {
 		return nil, errors.ErrEmptyToken
 	}
-	tgBaseURL := os.Getenv("TG_BASE_URL")
-	if len(strings.TrimSpace(tgBaseURL)) < 1 {
-		return nil, errors.ErrEmptyTgBaseURL
+	botAPIBaseURL := os.Getenv("BOT_API_BASE_URL")
+	if len(strings.TrimSpace(botAPIBaseURL)) < 1 {
+		botAPIBaseURL = defaultBotAPIBaseURL
 	}
-	whisperBaseURL := os.Getenv("WHISPER_BASE_URL")
-	if len(strings.TrimSpace(whisperBaseURL)) < 1 {
-		return nil, errors.ErrEmptyWhisperBaseURL
+	whisperAPIBaseURL := os.Getenv("WHISPER_API_BASE_URL")
+	if len(strings.TrimSpace(whisperAPIBaseURL)) < 1 {
+		return nil, errors.ErrEmptyWhisperAPIBaseURL
 	}
 	ffmpegBinPath := os.Getenv("FFMPEG_BIN_PATH")
 	if len(strings.TrimSpace(ffmpegBinPath)) < 1 {
@@ -36,9 +38,9 @@ func Load() (*Config, error) {
 		ffmpegBinPath = "ffmpeg"
 	}
 	return &Config{
-		Token:          token,
-		TgBaseURL:      tgBaseURL,
-		WhisperBaseURL: whisperBaseURL,
-		FfmpegBinPath:  ffmpegBinPath,
+		Token:             token,
+		BotAPIBaseURL:     botAPIBaseURL,
+		WhisperAPIBaseURL: whisperAPIBaseURL,
+		FfmpegBinPath:     ffmpegBinPath,
 	}, nil
 }

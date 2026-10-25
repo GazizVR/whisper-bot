@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	telegram "github.com/gazizvr/tg-bot-api/pkg"
-	"github.com/gazizvr/whisper-bot/internal/persist"
+	"github.com/gazizvr/whisper-bot/internal/store"
 )
 
 const (
@@ -22,14 +22,14 @@ func (h *UpdateHandler) handleMedia(
 	chatId, msgId int64,
 	fileId string,
 ) {
-	chat := h.RM.GetRequest(chatId)
+	chat := h.store.Get(chatId)
 	if chat == nil {
-		chat = &persist.Request{}
+		chat = &store.Request{}
 	}
 
 	chat.FileId = &fileId
 	chat.ReplyMsgId = &msgId
-	h.RM.PutRequest(chatId, *chat)
+	h.store.Set(chatId, *chat)
 
 	genLang := func(lang string) string {
 		return fmt.Sprintf("%s-%s", LangSelectAction, lang)
@@ -47,7 +47,7 @@ func (h *UpdateHandler) handleMedia(
 	markup := &telegram.InlineMarkup{
 		Keyboard: buttons,
 	}
-	_, err := h.Tg.SendMessage(
+	_, err := h.bot.SendMessage(
 		chatId,
 		LangSelectText,
 		markup,
@@ -63,9 +63,9 @@ func (h *UpdateHandler) handleCallback(
 	id, data string,
 	chatId, msgId int64,
 ) {
-	h.Tg.AnswerCallbackQuery(id)
+	h.bot.AnswerCallbackQuery(id)
 	if strings.Contains(data, LangSelectAction) {
-		request := h.RM.GetRequest(chatId)
+		request := h.store.Get(chatId)
 		if request == nil {
 			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
 			return
@@ -77,7 +77,7 @@ func (h *UpdateHandler) handleCallback(
 		language := data[strings.LastIndex(data, "-")+1:]
 		if language != "auto" {
 			request.Language = &language
-			h.RM.PutRequest(chatId, *request)
+			h.store.Set(chatId, *request)
 		}
 
 		getOutFormat := func(lang string) string {
@@ -92,7 +92,7 @@ func (h *UpdateHandler) handleCallback(
 		markup := &telegram.InlineMarkup{
 			Keyboard: buttons,
 		}
-		_, err := h.Tg.EditMessageText(
+		_, err := h.bot.EditMessageText(
 			chatId,
 			msgId,
 			OutFormatSelectText,
@@ -104,7 +104,7 @@ func (h *UpdateHandler) handleCallback(
 		}
 	}
 	if strings.Contains(data, OutFormatSelectAction) {
-		request := h.RM.GetRequest(chatId)
+		request := h.store.Get(chatId)
 		if request == nil {
 			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
 			return
@@ -113,7 +113,7 @@ func (h *UpdateHandler) handleCallback(
 			h.editToErrMsg("Chat.FileId is empty handle callback", chatId, msgId)
 			return
 		}
-		defer h.RM.RemoveRequest(chatId)
+		defer h.store.Delete(chatId)
 		outFormat := data[strings.LastIndex(data, "-")+1:]
 		h.genAndSendSubtitles(
 			chatId,
