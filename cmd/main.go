@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
+	"log/slog"
 
-	telegram "github.com/gazizvr/tg-bot-api/pkg"
+	telegrambot "github.com/gazizvr/go-telegram-bot"
 	"github.com/gazizvr/whisper-bot/internal/config"
 	"github.com/gazizvr/whisper-bot/internal/handler"
 	"github.com/gazizvr/whisper-bot/internal/store"
@@ -22,18 +24,37 @@ func main() {
 		convertor,
 	)
 
-	client := telegram.NewClient(
+	bot, err := telegrambot.NewBot(
 		config.Token,
-		config.BotAPIBaseURL,
+		telegrambot.WithBaseURL(config.BotAPIBaseURL),
 	)
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("The server is starting!")
 	requestStore := store.NewRequestStore()
 
-	handler := handler.NewUpdateHandler(client, transcriber, requestStore)
-	if err := client.ListenUpdates(
-		handler.Handle,
-		[]string{"message"},
-	); err != nil {
-		log.Fatalln(err)
+	handler := handler.NewUpdateHandler(bot, transcriber, requestStore)
+
+	var lastUpdateID int64
+	ctx := context.Background()
+	for {
+		upds, err := bot.GetUpdates(ctx, telegrambot.GetUpdatesParams{
+			Offset:         lastUpdateID + 1,
+			Limit:          100,
+			Timeout:        45,
+			AllowedUpdates: []string{"message"},
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, u := range upds {
+			lastUpdateID = u.ID
+			go func() {
+				if err := handler.Handle(ctx, u); err != nil {
+					slog.ErrorContext(ctx, err.Error())
+				}
+			}()
+		}
 	}
 }

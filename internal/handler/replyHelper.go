@@ -1,70 +1,92 @@
 package handler
 
-import "os"
+import (
+	"context"
+	"os"
+
+	telegrambot "github.com/gazizvr/go-telegram-bot"
+)
 
 const WaitText = "⏳ Подождите, обрабатывается..."
 
 func (h *UpdateHandler) genAndSendSubtitles(
-	chatId, msgId int64,
-	replyMsgId *int64,
-	fileId string,
+	ctx context.Context,
+	chatID, msgID int64,
+	replyMsgID *int64,
+	fileID string,
 	language *string,
 	outFormat string,
-) {
+) error {
 	msg, err := h.bot.EditMessageText(
-		chatId,
-		msgId,
-		WaitText,
-		nil,
+		ctx,
+		telegrambot.EditMessageTextParams{
+			ChatID:    chatID,
+			MessageID: msgID,
+			Text:      WaitText,
+		},
 	)
 	if err != nil {
-		h.editToErrMsg(err.Error(), chatId, msgId)
-		return
+		h.editToErrMsg(ctx, err.Error(), chatID, msgID)
+		return err
 	}
 
-	mediaPath, err := h.bot.DownloadFile(fileId, "tmp")
+	file, err := h.bot.GetFile(ctx, telegrambot.GetFileParams{FileID: fileID})
 	if err != nil {
-		h.sendErrMsg(err.Error(), chatId, msgId)
-		return
+		h.sendErrMsg(ctx, err.Error(), chatID, msgID)
+		return err
 	}
-	defer os.Remove(*mediaPath)
+	mediaPath := file.Path
+	defer os.Remove(mediaPath)
 
 	switch outFormat {
 	case "srt":
-		file, err := h.transcriber.ToSrt(*mediaPath, language)
+		fileName, err := h.transcriber.ToSrt(mediaPath, language)
 		if err != nil {
-			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
-			return
+			h.editToErrMsg(ctx, err.Error(), chatID, msg.ID)
+			return err
 		}
-		defer func() {
-			file.Close()
-			os.Remove(file.Name())
-		}()
+		defer os.Remove(*fileName)
 
 		if _, err := h.bot.SendDocument(
-			chatId,
-			*file,
-			replyMsgId,
+			ctx,
+			telegrambot.SendDocumentParams{
+				ChatID: chatID,
+				Document: telegrambot.LocalSource{
+					Filepath: *fileName,
+				},
+				ReplyParams: &telegrambot.ReplyParameters{
+					MessageID: replyMsgID,
+				},
+			},
 		); err != nil {
-			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
-			return
+			h.editToErrMsg(ctx, err.Error(), chatID, msg.ID)
+			return err
 		} else {
 			h.bot.DeleteMessage(
-				msg.Result.Chat.Id,
-				msg.Result.Id,
+				ctx,
+				telegrambot.DeleteMessageParams{
+					ChatID:    msg.Chat.ID,
+					MessageID: msg.ID,
+				},
 			)
 		}
 	case "json":
-		resp, err := h.transcriber.ToJson(*mediaPath, language)
+		resp, err := h.transcriber.ToJson(mediaPath, language)
 		if err != nil {
-			h.editToErrMsg(err.Error(), chatId, msg.Result.Id)
-			return
+			h.editToErrMsg(ctx, err.Error(), chatID, msg.ID)
+			return err
 		}
-		h.bot.EditMessageText(
-			chatId,
-			msgId,
-			resp.Text,
-			nil,
-		)
+		if _, err := h.bot.EditMessageText(
+			ctx,
+			telegrambot.EditMessageTextParams{
+				ChatID:    chatID,
+				MessageID: msgID,
+				Text:      resp.Text,
+			},
+		); err != nil {
+			h.editToErrMsg(ctx, err.Error(), chatID, msg.ID)
+			return err
+		}
 	}
+	return nil
 }

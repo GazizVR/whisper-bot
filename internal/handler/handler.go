@@ -1,21 +1,23 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"strings"
 
-	telegram "github.com/gazizvr/tg-bot-api/pkg"
+	telegrambot "github.com/gazizvr/go-telegram-bot"
 	"github.com/gazizvr/whisper-bot/internal/store"
 	"github.com/gazizvr/whisper-bot/pkg/whisper"
 )
 
 type UpdateHandler struct {
-	bot         *telegram.Client
+	bot         *telegrambot.Bot
 	transcriber *whisper.Transcriber
 	store       *store.RequestStore
 }
 
 func NewUpdateHandler(
-	bot *telegram.Client,
+	bot *telegrambot.Bot,
 	transcriber *whisper.Transcriber,
 	store *store.RequestStore,
 ) *UpdateHandler {
@@ -29,63 +31,98 @@ func NewUpdateHandler(
 const StartText = "🔗 Отправьте медиа файл"
 
 func (h *UpdateHandler) Handle(
-	upd telegram.Update,
-) {
+	ctx context.Context,
+	upd telegrambot.Update,
+) error {
 	if upd.Message != nil {
 		if upd.Message.Text == "/start" {
-			h.bot.SendMessage(
-				upd.Message.Chat.Id,
-				StartText,
-				nil,
-				nil,
-			)
+			if _, err := h.bot.SendMessage(
+				ctx,
+				telegrambot.SendMessageParams{
+					ChatID: upd.Message.Chat.ID,
+					Text:   StartText,
+				},
+			); err != nil {
+				return err
+			}
 		}
 		if upd.Message.Video != nil {
-			h.handleMedia(
-				upd.Message.Chat.Id,
-				upd.Message.Id,
-				upd.Message.Video.Id,
-			)
+			if err := h.handleMedia(
+				ctx,
+				upd.Message.Chat.ID,
+				upd.Message.ID,
+				upd.Message.Video.FileID,
+			); err != nil {
+				return err
+			}
 		}
 		if upd.Message.Audio != nil {
-			h.handleMedia(
-				upd.Message.Chat.Id,
-				upd.Message.Id,
-				upd.Message.Audio.Id,
-			)
+			if err := h.handleMedia(
+				ctx,
+				upd.Message.Chat.ID,
+				upd.Message.ID,
+				upd.Message.Audio.FileID,
+			); err != nil {
+				return err
+			}
 		}
 		if upd.Message.Voice != nil {
-			h.handleMedia(
-				upd.Message.Chat.Id,
-				upd.Message.Id,
-				upd.Message.Voice.Id,
-			)
+			if err := h.handleMedia(
+				ctx,
+				upd.Message.Chat.ID,
+				upd.Message.ID,
+				upd.Message.Voice.FileID,
+			); err != nil {
+				return err
+			}
 		}
 		if upd.Message.VideoNote != nil {
-			h.handleMedia(
-				upd.Message.Chat.Id,
-				upd.Message.Id,
-				upd.Message.VideoNote.Id,
-			)
+			if err := h.handleMedia(
+				ctx,
+				upd.Message.Chat.ID,
+				upd.Message.ID,
+				upd.Message.VideoNote.FileID,
+			); err != nil {
+				return err
+			}
 		}
 		if upd.Message.Document != nil {
 			if strings.Contains(upd.Message.Document.MimeType, "video") ||
 				strings.Contains(upd.Message.Document.MimeType, "audio") {
-				h.handleMedia(
-					upd.Message.Chat.Id,
-					upd.Message.Id,
-					upd.Message.Document.Id,
-				)
+				if err := h.handleMedia(
+					ctx,
+					upd.Message.Chat.ID,
+					upd.Message.ID,
+					upd.Message.Document.FileID,
+				); err != nil {
+					return err
+				}
 			}
 		}
 	}
-	if upd.Callback != nil {
-		query := upd.Callback
-		h.handleCallback(
-			query.Id,
+	if upd.CallbackQuery != nil {
+		query := upd.CallbackQuery
+		var message telegrambot.InaccessibleMessage
+		switch v := query.Message.(type) {
+		case telegrambot.InaccessibleMessage:
+			message = v
+		case telegrambot.Message:
+			message.ID = v.ID
+			message.Chat = v.Chat
+		case nil:
+			return errors.New("message is nil")
+		default:
+			return errors.New("unsupported message type")
+		}
+		if err := h.handleCallback(
+			ctx,
+			query.ID,
 			query.Data,
-			query.Message.Chat.Id,
-			query.Message.Id,
-		)
+			message.Chat.ID,
+			message.ID,
+		); err != nil {
+			return err
+		}
 	}
+	return nil
 }

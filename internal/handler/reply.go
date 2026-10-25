@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	telegram "github.com/gazizvr/tg-bot-api/pkg"
+	telegrambot "github.com/gazizvr/go-telegram-bot"
 	"github.com/gazizvr/whisper-bot/internal/store"
 )
 
@@ -19,9 +21,10 @@ const (
 )
 
 func (h *UpdateHandler) handleMedia(
+	ctx context.Context,
 	chatId, msgId int64,
 	fileId string,
-) {
+) error {
 	chat := h.store.Get(chatId)
 	if chat == nil {
 		chat = &store.Request{}
@@ -34,45 +37,54 @@ func (h *UpdateHandler) handleMedia(
 	genLang := func(lang string) string {
 		return fmt.Sprintf("%s-%s", LangSelectAction, lang)
 	}
-	buttons := [][]telegram.InlineButton{
+	buttons := [][]telegrambot.InlineKeyboardButton{
 		{
-			{Text: "🇺🇸 English", Data: genLang("en")},
-			{Text: "🇷🇺 Русский", Data: genLang("ru")},
-			{Text: "🇺🇿 Uzbek", Data: genLang("uz")},
+			{Text: "🇺🇸 English", CallbackData: genLang("en")},
+			{Text: "🇷🇺 Русский", CallbackData: genLang("ru")},
+			{Text: "🇺🇿 Uzbek", CallbackData: genLang("uz")},
 		},
 		{
-			{Text: "🌐 Автоматически", Data: genLang("auto")},
+			{Text: "🌐 Автоматически", CallbackData: genLang("auto")},
 		},
 	}
-	markup := &telegram.InlineMarkup{
+	markup := &telegrambot.InlineKeyboardMarkup{
 		Keyboard: buttons,
 	}
 	_, err := h.bot.SendMessage(
-		chatId,
-		LangSelectText,
-		markup,
-		&msgId,
+		ctx,
+		telegrambot.SendMessageParams{
+			ChatID:      chatId,
+			Text:        LangSelectText,
+			ReplyMarkup: markup,
+			ReplyParams: &telegrambot.ReplyParameters{
+				MessageID: &msgId,
+			},
+		},
 	)
 	if err != nil {
-		h.sendErrMsg(err.Error(), chatId, msgId)
-		return
+		h.sendErrMsg(ctx, err.Error(), chatId, msgId)
+		return err
 	}
+	return nil
 }
 
 func (h *UpdateHandler) handleCallback(
+	ctx context.Context,
 	id, data string,
 	chatId, msgId int64,
-) {
-	h.bot.AnswerCallbackQuery(id)
+) error {
+	h.bot.AnswerCallbackQuery(ctx, telegrambot.AnswerCallbackQueryParams{CallbackQueryID: id})
 	if strings.Contains(data, LangSelectAction) {
 		request := h.store.Get(chatId)
 		if request == nil {
-			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
-			return
+			errText := "Chat is empty handle callback"
+			h.editToErrMsg(ctx, errText, chatId, msgId)
+			return errors.New(errText)
 		}
 		if request.FileId == nil {
-			h.editToErrMsg("Chat.FileId is empty handle callback", chatId, msgId)
-			return
+			errText := "Chat.FileId is empty handle callback"
+			h.editToErrMsg(ctx, errText, chatId, msgId)
+			return errors.New(errText)
 		}
 		language := data[strings.LastIndex(data, "-")+1:]
 		if language != "auto" {
@@ -83,45 +95,54 @@ func (h *UpdateHandler) handleCallback(
 		getOutFormat := func(lang string) string {
 			return fmt.Sprintf("%s-%s", OutFormatSelectAction, lang)
 		}
-		buttons := [][]telegram.InlineButton{
+		buttons := [][]telegrambot.InlineKeyboardButton{
 			{
-				{Text: "📄 .srt файл", Data: getOutFormat("srt")},
-				{Text: "📝 текст", Data: getOutFormat("json")},
+				{Text: "📄 .srt файл", CallbackData: getOutFormat("srt")},
+				{Text: "📝 текст", CallbackData: getOutFormat("json")},
 			},
 		}
-		markup := &telegram.InlineMarkup{
+		markup := &telegrambot.InlineKeyboardMarkup{
 			Keyboard: buttons,
 		}
 		_, err := h.bot.EditMessageText(
-			chatId,
-			msgId,
-			OutFormatSelectText,
-			markup,
+			ctx,
+			telegrambot.EditMessageTextParams{
+				ChatID:      chatId,
+				MessageID:   msgId,
+				Text:        OutFormatSelectText,
+				ReplyMarkup: markup,
+			},
 		)
 		if err != nil {
-			h.editToErrMsg(err.Error(), chatId, msgId)
-			return
+			h.editToErrMsg(ctx, err.Error(), chatId, msgId)
+			return err
 		}
 	}
 	if strings.Contains(data, OutFormatSelectAction) {
 		request := h.store.Get(chatId)
 		if request == nil {
-			h.editToErrMsg("Chat is empty handle callback", chatId, msgId)
-			return
+			errText := "Chat is empty handle callback"
+			h.editToErrMsg(ctx, errText, chatId, msgId)
+			return errors.New(errText)
 		}
 		if request.FileId == nil {
-			h.editToErrMsg("Chat.FileId is empty handle callback", chatId, msgId)
-			return
+			errText := "Chat.FileId is empty handle callback"
+			h.editToErrMsg(ctx, errText, chatId, msgId)
+			return errors.New(errText)
 		}
 		defer h.store.Delete(chatId)
 		outFormat := data[strings.LastIndex(data, "-")+1:]
-		h.genAndSendSubtitles(
+		if err := h.genAndSendSubtitles(
+			ctx,
 			chatId,
 			msgId,
 			request.ReplyMsgId,
 			*request.FileId,
 			request.Language,
 			outFormat,
-		)
+		); err != nil {
+			return err
+		}
 	}
+	return nil
 }

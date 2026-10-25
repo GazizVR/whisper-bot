@@ -1,4 +1,2 @@
-github.com/gazizvr/tg-bot-api v0.0.0-20260901121530-08d3c833fabe h1:oheiofYjcgzaFD9jI4r+dLOPwaXxd85gXXDAsyrjx7U=
-github.com/gazizvr/tg-bot-api v0.0.0-20260901121530-08d3c833fabe/go.mod h1:OayS2MHWFv/PPbGIIQC1XMaSCRQ61gLAd3XMeS+cxRk=
-github.com/gazizvr/tg-bot-api v0.0.0-20260904133144-ec4c8db07519 h1:SpZdkrDgpqz5FdoEY2bn3qa5u2Xxpw46faOJr3VF3o4=
-github.com/gazizvr/tg-bot-api v0.0.0-20260904133144-ec4c8db07519/go.mod h1:OayS2MHWFv/PPbGIIQC1XMaSCRQ61gLAd3XMeS+cxRk=
+github.com/gazizvr/go-telegram-bot v0.0.0-20261025152640-ef4a62d0ff22 h1:mg3RN5pZ2t30mlHNBHNV/URpvIuWbpltzeJ8ArosiL0=
+github.com/gazizvr/go-telegram-bot v0.0.0-20261025152640-ef4a62d0ff22/go.mod h1:Yt37TZt4zevGxL80zyiAbDKGnoVI75+NFj0HWqrpMxo=

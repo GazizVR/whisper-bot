@@ -104,7 +104,7 @@ func (t *Transcriber) transcribe(
 func (t *Transcriber) ToSrt(
 	mediaPath string,
 	language *string,
-) (*os.File, error) {
+) (*string, error) {
 	respData, err := t.transcribe(mediaPath, language, "srt")
 	if err != nil {
 		return nil, err
@@ -118,12 +118,7 @@ func (t *Transcriber) ToSrt(
 		return nil, err
 	}
 
-	file, err := os.Open(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
+	return &fileName, nil
 }
 
 func (t *Transcriber) ToJson(
