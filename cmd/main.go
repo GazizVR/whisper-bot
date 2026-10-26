@@ -43,7 +43,7 @@ func main() {
 			Offset:         lastUpdateID + 1,
 			Limit:          100,
 			Timeout:        45,
-			AllowedUpdates: []string{"message"},
+			AllowedUpdates: []string{"message", "callback_query"},
 		})
 		if err != nil {
 			log.Fatal(err)
