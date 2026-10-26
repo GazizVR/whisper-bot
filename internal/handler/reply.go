@@ -73,7 +73,12 @@ func (h *UpdateHandler) handleCallback(
 	id, data string,
 	chatId, msgId int64,
 ) error {
-	h.bot.AnswerCallbackQuery(ctx, telegrambot.AnswerCallbackQueryParams{CallbackQueryID: id})
+	if err := h.bot.AnswerCallbackQuery(
+		ctx,
+		telegrambot.AnswerCallbackQueryParams{CallbackQueryID: id},
+	); err != nil {
+		return err
+	}
 	if strings.Contains(data, LangSelectAction) {
 		request := h.store.Get(chatId)
 		if request == nil {
