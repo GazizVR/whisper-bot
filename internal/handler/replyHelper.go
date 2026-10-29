@@ -30,12 +30,11 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		return err
 	}
 
-	file, err := h.bot.GetFile(ctx, telegrambot.GetFileParams{FileID: fileID})
+	filepath, err := h.bot.DownloadFile(ctx, fileID, "tmp")
 	if err != nil {
-		h.sendErrMsg(ctx, err.Error(), chatID, msgID)
+		h.editToErrMsg(ctx, err.Error(), chatID, msgID)
 		return err
 	}
-	filepath := file.Path
 	defer os.Remove(filepath)
 
 	switch outFormat {
