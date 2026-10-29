@@ -2,4 +2,4 @@
 if [ -f .env ]; then
     export $(cat .env | xargs)
 fi
-go run cmd/main.go
+go run cmd/bot/main.go

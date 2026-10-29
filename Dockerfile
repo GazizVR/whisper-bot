@@ -1,11 +1,20 @@
-FROM golang:1.27.1
+# 1. Build
+FROM golang:1.27.1 AS builder
 WORKDIR /app
-COPY cmd ./cmd
+
+COPY cmd/bot ./cmd/bot
 COPY internal ./internal
 COPY pkg ./pkg
 COPY go.mod .
 COPY go.sum .
 
-RUN apt update -y && apt install ffmpeg -y
-RUN go build -o bot cmd/main.go
-CMD ["./bot"]
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" ./cmd/bot
+
+# 2. Run
+FROM alpine:3.24.3
+
+COPY --from=builder /app/bot /bot
+
+RUN apk add --no-cache ffmpeg
+
+CMD [ "./bot" ]

@@ -35,24 +35,24 @@ func (h *UpdateHandler) genAndSendSubtitles(
 		h.sendErrMsg(ctx, err.Error(), chatID, msgID)
 		return err
 	}
-	mediaPath := file.Path
-	defer os.Remove(mediaPath)
+	filepath := file.Path
+	defer os.Remove(filepath)
 
 	switch outFormat {
 	case "srt":
-		fileName, err := h.transcriber.ToSrt(mediaPath, language)
+		fileName, err := h.transcriber.ToSrt(filepath, language)
 		if err != nil {
 			h.editToErrMsg(ctx, err.Error(), chatID, msg.ID)
 			return err
 		}
-		defer os.Remove(*fileName)
+		defer os.Remove(fileName)
 
 		if _, err := h.bot.SendDocument(
 			ctx,
 			telegrambot.SendDocumentParams{
 				ChatID: chatID,
-				Document: telegrambot.LocalSource{
-					Filepath: *fileName,
+				Document: &telegrambot.LocalSource{
+					Filepath: fileName,
 				},
 				ReplyParams: &telegrambot.ReplyParameters{
 					MessageID: replyMsgID,
@@ -71,7 +71,7 @@ func (h *UpdateHandler) genAndSendSubtitles(
 			)
 		}
 	case "json":
-		resp, err := h.transcriber.ToJson(mediaPath, language)
+		resp, err := h.transcriber.ToJson(filepath, language)
 		if err != nil {
 			h.editToErrMsg(ctx, err.Error(), chatID, msg.ID)
 			return err
