@@ -17,4 +17,4 @@ COPY --from=builder /app/bot /bot
 
 RUN apk add --no-cache ffmpeg
 
-CMD [ "./bot" ]
+ENTRYPOINT [ "./bot" ]
